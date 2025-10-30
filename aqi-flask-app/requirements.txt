@@ -1,0 +1,5 @@
+flask
+numpy
+scikit-learn
+# add xgboost or other deps if your model needs them, e.g.
+# xgboost

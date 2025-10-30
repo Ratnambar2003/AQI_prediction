@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AQI Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AQI Predictor</h1>
+      <p class="subtitle">Enter pollutant & weather values and click Predict</p>
+    </header>
+
+    <main>
+      <form id="aqi-form">
+  <div class="grid">
+    <div class="field"><label for="pm25">PM2.5 (µg/m³)</label><input type="number" step="any" id="pm25" name="PM2.5" required></div>
+    <div class="field"><label for="pm10">PM10 (µg/m³)</label><input type="number" step="any" id="pm10" name="PM10" required></div>
+    <div class="field"><label for="no">NO (µg/m³)</label><input type="number" step="any" id="no" name="NO" required></div>
+    <div class="field"><label for="no2">NO₂ (µg/m³)</label><input type="number" step="any" id="no2" name="NO2" required></div>
+    <div class="field"><label for="nox">NOx (µg/m³)</label><input type="number" step="any" id="nox" name="NOx" required></div>
+    <div class="field"><label for="nh3">NH₃ (µg/m³)</label><input type="number" step="any" id="nh3" name="NH3" required></div>
+    <div class="field"><label for="co">CO (mg/m³)</label><input type="number" step="any" id="co" name="CO" required></div>
+    <div class="field"><label for="so2">SO₂ (µg/m³)</label><input type="number" step="any" id="so2" name="SO2" required></div>
+    <div class="field"><label for="o3">O₃ (µg/m³)</label><input type="number" step="any" id="o3" name="O3" required></div>
+    <div class="field"><label for="benzene">Benzene (µg/m³)</label><input type="number" step="any" id="benzene" name="Benzene" required></div>
+    <div class="field"><label for="toluene">Toluene (µg/m³)</label><input type="number" step="any" id="toluene" name="Toluene" required></div>
+    <div class="field"><label for="xylene">Xylene (µg/m³)</label><input type="number" step="any" id="xylene" name="Xylene" required></div>
+  </div>
+
+  <div class="actions">
+    <button type="submit" id="predict-btn">Predict AQI</button>
+    <button type="reset" id="reset-btn" class="muted">Reset</button>
+  </div>
+</form>
+
+
+      <section id="result" class="result-hidden">
+        <h2>Predicted AQI</h2>
+        <div id="aqi-card">
+          <span id="aqi-value">--</span>
+          <span id="aqi-category">--</span>
+        </div>
+        <p id="advice" class="advice"></p>
+      </section>
+    </main>
+
+    <footer>
+      <small>Place your <code>aqi.pkl</code> in project root. Backend: Flask</small>
+    </footer>
+  </div>
+
+ 
+ <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
