@@ -83,7 +83,7 @@ pypiwin32==223
 python-dateutil==2.9.0.post0
 pyttsx3==2.98
 pytz==2025.2
-pywin32==310
+#pywin32==310
 pyzmq==27.1.0
 regex==2024.11.6
 requests==2.32.3
