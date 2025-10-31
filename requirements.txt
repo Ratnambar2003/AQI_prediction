@@ -74,7 +74,6 @@ prompt_toolkit==3.0.52
 protobuf==6.32.1
 psutil==7.1.1
 pure_eval==0.2.3
-PyAudio==0.2.14
 pycparser==2.22
 Pygments==2.19.2
 PyMySQL==1.1.1
