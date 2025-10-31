@@ -2,39 +2,52 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import pickle
 import os
+import requests
 
 app = Flask(__name__)
 
-# Load model
+# Path to model
 MODEL_PATH = "aqi.pkl"
+
+# Optional: Direct link to your model (e.g. from Google Drive, HuggingFace, etc.)
+MODEL_URL = "https://example.com/aqi.pkl"  # 🔗 Replace with your real link
+
+def download_model():
+    """Download the model file if not present (useful for Render)."""
+    if MODEL_URL.startswith("http"):
+        print(f"Downloading model from {MODEL_URL} ...")
+        response = requests.get(MODEL_URL)
+        if response.status_code == 200:
+            with open(MODEL_PATH, "wb") as f:
+                f.write(response.content)
+            print("Model downloaded successfully ✅")
+        else:
+            raise Exception(f"Failed to download model. Status: {response.status_code}")
+    else:
+        raise FileNotFoundError(f"Model file not found and no valid MODEL_URL provided.")
+
+# Try loading model
 if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}. Place your aqi.pkl in project root.")
+    try:
+        download_model()
+    except Exception as e:
+        raise FileNotFoundError(f"❌ Model file not found and could not be downloaded: {e}")
 
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
 
-# If your model requires a scaler or encoder that was saved separately,
-# load them here the same way. For example:
-# with open("scaler.pkl", "rb") as f:
-#     scaler = pickle.load(f)
-# If not, we assume model accepts raw numeric features in the given order.
-
-FEATURE_NAMES = ["PM2.5", "PM10", "NO", "NO2", "NOx", "NH3", "CO", "SO2", "O3", "Benzene", "Toluene", "Xylene"]
-
+FEATURE_NAMES = [
+    "PM2.5", "PM10", "NO", "NO2", "NOx", "NH3",
+    "CO", "SO2", "O3", "Benzene", "Toluene", "Xylene"
+]
 
 def aqi_category(aqi_value: float):
-    """Return (category_name, color_hex) for display."""
     a = aqi_value
-    if a <= 50:
-        return "Good", "#009966"
-    if a <= 100:
-        return "Satisfactory", "#ffde33"
-    if a <= 200:
-        return "Moderate", "#ff9933"
-    if a <= 300:
-        return "Poor", "#cc0033"
-    if a <= 400:
-        return "Very Poor", "#660099"
+    if a <= 50: return "Good", "#009966"
+    if a <= 100: return "Satisfactory", "#ffde33"
+    if a <= 200: return "Moderate", "#ff9933"
+    if a <= 300: return "Poor", "#cc0033"
+    if a <= 400: return "Very Poor", "#660099"
     return "Severe", "#7e0023"
 
 @app.route("/")
@@ -45,18 +58,14 @@ def index():
 def predict():
     try:
         data = request.get_json()
-        # collect features in the expected order
         inputs = []
         for fname in FEATURE_NAMES:
-            # allow both camel/pretty names or exact keys
             val = data.get(fname)
             if val is None:
-                # try alternate keys like PM2_5 or PM2.5 if user sent that
                 alt = data.get(fname.replace(".", "").replace("_", ""))
                 val = alt
             if val is None:
                 return jsonify({"error": f"Missing feature: {fname}"}), 400
-            # convert to float
             try:
                 fval = float(val)
             except:
@@ -64,16 +73,8 @@ def predict():
             inputs.append(fval)
 
         X = np.array(inputs).reshape(1, -1)
-
-        # If your model needs scaling, apply scaler here before predict.
-        # X = scaler.transform(X)
-
         pred = model.predict(X)
-        # ensure scalar
-        if hasattr(pred, "__len__"):
-            pred_value = float(pred[0])
-        else:
-            pred_value = float(pred)
+        pred_value = float(pred[0]) if hasattr(pred, "__len__") else float(pred)
 
         category, color = aqi_category(pred_value)
 
@@ -86,4 +87,4 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
