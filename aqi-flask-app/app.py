@@ -6,26 +6,32 @@ import requests  # ✅ for downloading model from Hugging Face
 
 app = Flask(__name__)
 
-# === Model file setup ===
+# === Model setup ===
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "aqi.pkl")
-
-# ✅ Hugging Face model link
 MODEL_URL = "https://huggingface.co/Ratnambar2/aqi-model/resolve/df1ee14c4692ff74f0a4ca765433912fd59f73a5/aqi.pkl"
 
-# === Download model if not present ===
-if not os.path.exists(MODEL_PATH):
-    print("📥 Model not found locally. Downloading from Hugging Face...")
-    response = requests.get(MODEL_URL)
-    if response.status_code == 200:
-        with open(MODEL_PATH, "wb") as f:
-            f.write(response.content)
-        print("✅ Model downloaded successfully!")
-    else:
-        raise Exception(f"Failed to download model. Status code: {response.status_code}")
+# Global variable to hold the model (lazy load)
+model = None
 
-# === Load model ===
-with open(MODEL_PATH, "rb") as f:
-    model = pickle.load(f)
+# === Function to download and load model ===
+def load_model():
+    """Downloads and loads the model only when needed."""
+    global model
+    if model is None:
+        if not os.path.exists(MODEL_PATH):
+            print("📥 Model not found locally. Downloading from Hugging Face...")
+            response = requests.get(MODEL_URL)
+            if response.status_code == 200:
+                with open(MODEL_PATH, "wb") as f:
+                    f.write(response.content)
+                print("✅ Model downloaded successfully!")
+            else:
+                raise Exception(f"Failed to download model. Status code: {response.status_code}")
+
+        print("🔄 Loading model into memory...")
+        with open(MODEL_PATH, "rb") as f:
+            model = pickle.load(f)
+        print("✅ Model loaded successfully.")
 
 # === Feature names ===
 FEATURE_NAMES = [
@@ -50,6 +56,7 @@ def index():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
+        load_model()  # ✅ Lazy load on first prediction call
         data = request.get_json()
         X = np.array([float(data[f]) for f in FEATURE_NAMES]).reshape(1, -1)
         pred = float(model.predict(X)[0])
@@ -57,6 +64,11 @@ def predict():
         return jsonify({"aqi": round(pred, 2), "category": category, "color": color})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/status")
+def status():
+    """Health check route for Render."""
+    return jsonify({"status": "running", "model_loaded": model is not None})
 
 # === Run ===
 if __name__ == "__main__":
