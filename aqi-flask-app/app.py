@@ -2,24 +2,26 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import pickle
 import os
-import gdown  # ✅ for downloading model from Google Drive
+import requests  # ✅ for downloading model from Hugging Face
 
 app = Flask(__name__)
 
 # === Model file setup ===
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "aqi.pkl")
 
-# ✅ Google Drive file ID (replace with your own)
-# Example link: https://drive.google.com/file/d/1AbCDefGhIJklMNopQR/view?usp=sharing
-# Then file ID = 1AbCDefGhIJklMNopQR
-DRIVE_FILE_ID = "1WBRhEifzfGb0FGpvTe0FIBPuiLs8HxBA"
-DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
+# ✅ Hugging Face model link
+MODEL_URL = "https://huggingface.co/Ratnambar2/aqi-model/resolve/df1ee14c4692ff74f0a4ca765433912fd59f73a5/aqi.pkl"
 
 # === Download model if not present ===
 if not os.path.exists(MODEL_PATH):
-    print("📥 Model not found locally. Downloading from Google Drive...")
-    gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
-    print("✅ Model downloaded successfully!")
+    print("📥 Model not found locally. Downloading from Hugging Face...")
+    response = requests.get(MODEL_URL)
+    if response.status_code == 200:
+        with open(MODEL_PATH, "wb") as f:
+            f.write(response.content)
+        print("✅ Model downloaded successfully!")
+    else:
+        raise Exception(f"Failed to download model. Status code: {response.status_code}")
 
 # === Load model ===
 with open(MODEL_PATH, "rb") as f:
